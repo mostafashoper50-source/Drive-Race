@@ -1,0 +1,449 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+  <title>Drive Race - Multiplayer Edition</title>
+  <link rel="stylesheet" href="style.css">
+  <script src="https://unpkg.com/peerjs@1.5.4/dist/peerjs.min.js"></script>
+</head>
+<body>
+  <div id="app">
+    <canvas id="gameCanvas"></canvas>
+
+    <!-- TOP HEADER / ACCOUNT BAR IN MENU -->
+    <header id="menuTopBar" class="top-bar">
+      <div class="user-pill" id="userPillBtn" title="إدارة الحساب ومزامنة Gmail">
+        <span class="user-avatar" id="topAvatar">👤</span>
+        <span class="user-name" id="topUserName">زائر (غير مسجل)</span>
+        <span class="cloud-badge" id="cloudStatusBadge" title="حالة المزامنة السحابية">☁️ محلي</span>
+      </div>
+      <div class="trophy-pill" id="topTrophyPill" title="رصيدك من الكؤوس للشراء من المتجر">
+        <span class="trophy-icon">🏆</span>
+        <b id="topTrophiesCount">0</b>
+      </div>
+    </header>
+
+    <!-- START SCREEN -->
+    <section id="startScreen" class="screen">
+      <div class="menu-card main-menu-card">
+        <div class="logo">DRIVE <span>RACE</span></div>
+        <p class="subtitle">سباق سيارات واقعي • 4 مسارات • فردي وجماعي</p>
+
+        <!-- CAR PREVIEW -->
+        <div class="car-preview-wrap">
+          <div id="previewCar" class="car-preview">
+            <div class="car-window"></div>
+            <div class="car-stripes"></div>
+          </div>
+        </div>
+
+        <!-- QUICK TILES -->
+        <div class="action-tiles three-tiles">
+          <button id="openColorWheelBtn" class="tile-btn" title="تلوين السيارة ومتجر الكؤوس">
+            <span class="tile-icon">🎨</span>
+            <span>عجلة الألوان والمتجر</span>
+          </button>
+          <button id="openAccountBtn" class="tile-btn" title="حفظ التقدم على Gmail">
+            <span class="tile-icon">👤</span>
+            <span>حساب Gmail</span>
+          </button>
+          <button id="openTutorialBtn" class="tile-btn tutorial-tile" title="دليل اللعبة وطريقة اللعب">
+            <span class="tile-icon">📖</span>
+            <span>كيف تلعب؟ (دليل)</span>
+          </button>
+        </div>
+
+        <!-- MODE SELECTION TABS -->
+        <div class="mode-tabs-container">
+          <div class="mode-tabs">
+            <button id="tabSoloBtn" class="mode-tab-btn active">
+              <span class="tab-icon">🏎️</span>
+              <span>لعب فردي (Singleplayer)</span>
+            </button>
+            <button id="tabMultiBtn" class="mode-tab-btn">
+              <span class="tab-icon">🌐</span>
+              <span>لعب جماعي (Multiplayer)</span>
+            </button>
+          </div>
+        </div>
+
+        <!-- PANEL 1: SINGLEPLAYER UI -->
+        <div id="soloPanel" class="mode-panel">
+          <div class="settings-grid">
+            <div class="form-group">
+              <label for="difficultySelect">الصعوبة:</label>
+              <select id="difficultySelect">
+                <option value="peaceful">🔵 السلام التام (بدون سيارات)</option>
+                <option value="easy">🟢 سهل</option>
+                <option value="normal" selected>🟡 عادي</option>
+                <option value="hard">🔴 صعب</option>
+              </select>
+            </div>
+            <div class="form-group">
+              <label for="timeSelect">الوقت:</label>
+              <select id="timeSelect">
+                <option value="day" selected>☀️ نهار</option>
+                <option value="night">🌙 ليل</option>
+              </select>
+            </div>
+            <div class="form-group full-width">
+              <label for="biomeSelect">البيئة الابتدائية:</label>
+              <select id="biomeSelect">
+                <option value="grass" selected>🌿 الأرض الخضراء</option>
+                <option value="desert">🏜️ الصحراء</option>
+                <option value="city">🏙️ المدينة</option>
+                <option value="winter">❄️ الشتاء / الجليد</option>
+              </select>
+            </div>
+          </div>
+
+          <button id="startBtn" class="main-btn play-btn-glow">
+            <span>🏁 ابدأ السباق الفردي الآن</span>
+          </button>
+        </div>
+
+        <!-- PANEL 2: MULTIPLAYER UI -->
+        <div id="multiPanel" class="mode-panel hidden">
+          <div class="multiplayer-actions">
+            <button id="openHostBtn" class="mp-btn host-btn">
+              <span class="mp-icon">👑</span>
+              <div class="mp-text">
+                <strong>إنشاء سيرفر (Host Server)</strong>
+                <small>اختر البيئة والصعوبة واستضف حتى 4 أصدقاء بكود 6 خانات</small>
+              </div>
+            </button>
+            <button id="openJoinBtn" class="mp-btn join-btn">
+              <span class="mp-icon">🔗</span>
+              <div class="mp-text">
+                <strong>انضمام لسيرفر (Join Server)</strong>
+                <small>أدخل كود السيرفر (6 أرقام) وتنافس مع أصدقائك</small>
+              </div>
+            </button>
+          </div>
+          <div class="mp-features-hint">
+            <span>📡 يشمل حركة الأمام/الخلف ورادار Friend Locate • حتى 4 لاعبين</span>
+          </div>
+        </div>
+
+        <!-- QUICK HELP FOOTER -->
+        <div class="help-box">
+          <span>التحكم:</span> الأسهم ⬆ ⬇ ⬅ ➡ أو W S A D • مسافة/فرملة • إيقاف: Esc
+        </div>
+      </div>
+    </section>
+
+    <!-- TUTORIAL MODAL -->
+    <section id="tutorialModal" class="screen hidden">
+      <div class="menu-card tutorial-card">
+        <div class="tutorial-header">
+          <h2>📖 دليل القيادة والتعليمات (Tutorial)</h2>
+          <span class="tutorial-tag">كل ما تحتاجه للبدء</span>
+        </div>
+
+        <div class="tutorial-cards-grid">
+          <div class="tut-card">
+            <div class="tut-icon">🕹️</div>
+            <h3>التحكم بالأمام والخلف والمسارات</h3>
+            <p>
+              • <b>في اللعب الفردي:</b> التحكم بالمسارات يميناً ويساراً مع تسريع وفرملة.<br>
+              • <b>في اللعب الجماعي:</b> تفعيل نظام الحركة للأمام والرجوع للخلف ($Reverse$) مع أضواء رجوع بيضاء!<br>
+              • <b>الأسهم (⬅ ➡):</b> التغيير بين المسارات الـ 4.
+            </p>
+          </div>
+
+          <div class="tut-card">
+            <div class="tut-icon">🚗</div>
+            <h3>الذكاء الاصطناعي للمرور والوقوف</h3>
+            <p>
+              • عند وقوف سيارتك في مسار، <b>السيارات القادمة خلفك تستشعر وجودك وتقف تماماً</b> خلفك دون اصطدام.<br>
+              • تشعل أضواء الفرامل الحمراء وتقف في طابور، وتتحرك فور انطلاقك.
+            </p>
+          </div>
+
+          <div class="tut-card">
+            <div class="tut-icon">🌐</div>
+            <h3>اللعب الجماعي ورادار الأصدقاء</h3>
+            <p>
+              • اضغط <b>Host Server</b> لتوليد كود من 6 خانات وإعداد السيرفر.<br>
+              • اضغط <b>Join Server</b> لكتابة الكود والدخول.<br>
+              • <b>رادار Friend Locate</b> يحدد بالأمتار إن كان صديقك أمامك أو خلفك!
+            </p>
+          </div>
+
+          <div class="tut-card">
+            <div class="tut-icon">🎨</div>
+            <h3>عجلة الألوان وسحابة Gmail</h3>
+            <p>
+              • استخدم <b>عجلة الألوان</b> لاختيار أي لون أو الشراء بالكؤوس 🏆.<br>
+              • سجّل بريد <b>Gmail</b> لحفظ كؤوسك وألوانك سحابياً!
+            </p>
+          </div>
+        </div>
+
+        <button id="closeTutorialBtn" class="main-btn">
+          <span>👍 فهمت، رجوع للقائمة</span>
+        </button>
+      </div>
+    </section>
+
+    <!-- HOST SERVER MODAL -->
+    <section id="hostModal" class="screen hidden">
+      <div class="menu-card">
+        <h2>👑 إنشاء سيرفر (Host Server)</h2>
+        <p class="modal-desc">اختر إعدادات الغرفة وشارك الكود المكون من 6 أرقام مع أصدقائك (الحد الأقصى: 4 لاعبين)</p>
+
+        <div class="settings-grid">
+          <div class="form-group">
+            <label for="hostDifficulty">الصعوبة:</label>
+            <select id="hostDifficulty">
+              <option value="peaceful">🔵 السلام التام (حركة مرور حرة)</option>
+              <option value="easy">🟢 سهل</option>
+              <option value="normal" selected>🟡 عادي</option>
+              <option value="hard">🔴 صعب</option>
+            </select>
+          </div>
+          <div class="form-group">
+            <label for="hostTime">الوقت:</label>
+            <select id="hostTime">
+              <option value="day" selected>☀️ نهار</option>
+              <option value="night">🌙 ليل</option>
+            </select>
+          </div>
+          <div class="form-group full-width">
+            <label for="hostBiome">المكان / البيئة:</label>
+            <select id="hostBiome">
+              <option value="grass" selected>🌿 الأرض الخضراء</option>
+              <option value="desert">🏜️ الصحراء</option>
+              <option value="city">🏙️ المدينة</option>
+              <option value="winter">❄️ الشتاء / الجليد</option>
+            </select>
+          </div>
+        </div>
+
+        <div id="hostLobbyBox" class="lobby-box">
+          <div class="code-header">كود السيرفر (6 خانات):</div>
+          <div class="code-display-wrap">
+            <span id="roomCodeDisplay" class="room-code">------</span>
+            <button id="copyCodeBtn" class="copy-btn" title="نسخ الكود">📋 نسخ</button>
+          </div>
+          <p class="lobby-status" id="hostStatusText">جاري تهيئة خادم الغرفة...</p>
+
+          <div class="players-list-wrap">
+            <div class="players-header">قائمة اللاعبين (<span id="playerCountText">1</span> / 4):</div>
+            <ul id="hostPlayersList" class="players-list"></ul>
+          </div>
+        </div>
+
+        <div class="modal-buttons">
+          <button id="startHostGameBtn" class="main-btn" disabled>🚀 بدء السباق الجماعي</button>
+          <button id="cancelHostBtn" class="secondary-btn danger-btn">↩️ إلغاء ورجوع للقائمة</button>
+        </div>
+      </div>
+    </section>
+
+    <!-- JOIN SERVER MODAL -->
+    <section id="joinModal" class="screen hidden">
+      <div class="menu-card small">
+        <h2>🔗 انضمام إلى سيرفر</h2>
+        <p class="modal-desc">أدخل كود السيرفر المكون من 6 أرقام للانضمام إلى غرفة أصدقائك:</p>
+
+        <div class="code-input-container">
+          <input type="text" id="joinCodeInput" maxlength="6" placeholder="مثال: 724190" autocomplete="off" inputmode="numeric">
+        </div>
+        <p id="joinStatusText" class="status-msg"></p>
+
+        <div id="joinLobbyBox" class="lobby-box hidden">
+          <div class="players-header">اللاعبون المتصلون (<span id="joinPlayerCount">0</span>/4):</div>
+          <ul id="joinPlayersList" class="players-list"></ul>
+          <div class="waiting-badge">⏳ بانتظار الهوست لبدء السباق...</div>
+        </div>
+
+        <div class="modal-buttons">
+          <button id="submitJoinBtn" class="main-btn">دخول السيرفر</button>
+          <button id="cancelJoinBtn" class="secondary-btn danger-btn">↩️ إلغاء ورجوع للقائمة</button>
+        </div>
+      </div>
+    </section>
+
+    <!-- COLOR WHEEL MODAL -->
+    <section id="colorShopModal" class="screen hidden">
+      <div class="menu-card large-modal">
+        <div class="shop-header">
+          <h2>🎨 نظام تلوين بالعجلة ومتجر الكؤوس</h2>
+          <div class="trophy-balance">
+            <span>رصيدك:</span>
+            <b id="shopTrophiesCount">0</b> 🏆
+          </div>
+        </div>
+
+        <div class="shop-grid">
+          <div class="wheel-panel">
+            <h3>عجلة الألوان المباشرة</h3>
+            <div class="wheel-container">
+              <canvas id="colorWheelCanvas" width="220" height="220"></canvas>
+              <div id="wheelCursor" class="wheel-cursor"></div>
+            </div>
+            
+            <div class="brightness-slider-wrap">
+              <label for="lightnessSlider">السطوع:</label>
+              <input type="range" id="lightnessSlider" min="15" max="90" value="50">
+            </div>
+
+            <div class="current-picked-preview">
+              <div class="color-chip" id="pickedColorChip"></div>
+              <span id="pickedColorHex">#e53935</span>
+            </div>
+
+            <button id="applyWheelColorBtn" class="main-btn small-btn">
+              <span id="wheelColorActionText">استخدام هذا اللون</span>
+            </button>
+          </div>
+
+          <div class="catalog-panel">
+            <h3>ألوان مميزة للشراء بالكؤوس</h3>
+            <div id="colorShopCatalog" class="colors-catalog"></div>
+
+            <div class="shop-car-preview-box">
+              <div id="shopCarPreview" class="car-preview">
+                <div class="car-window"></div>
+              </div>
+              <span id="activeColorName">اللون الحالي: أحمر سباق</span>
+            </div>
+          </div>
+        </div>
+
+        <div class="modal-footer">
+          <button id="closeColorShopBtn" class="secondary-btn">↩️ حفظ ورجوع للقائمة</button>
+        </div>
+      </div>
+    </section>
+
+    <!-- ACCOUNT MODAL -->
+    <section id="accountModal" class="screen hidden">
+      <div class="menu-card">
+        <h2>👤 نظام الحساب والمزامنة السحابية</h2>
+        <p class="modal-desc">سجل دخولك بحساب Gmail لحفظ تقدمك وكؤوسك وألوانك سحابياً والوصول إليها من أي جهاز!</p>
+
+        <div class="account-card" id="accountStatusCard">
+          <div class="account-info-row">
+            <span class="acc-icon" id="accIcon">👤</span>
+            <div>
+              <h3 id="accEmailDisplay">غير مسجل</h3>
+              <p id="accCloudStatus">البيانات محفوظة محلياً فقط</p>
+            </div>
+          </div>
+        </div>
+
+        <div id="accountFormBox" class="account-form">
+          <div class="form-group">
+            <label for="accUsernameInput">اسم السائق / اللقب:</label>
+            <input type="text" id="accUsernameInput" placeholder="أدخل اسمك المستعار" maxlength="16">
+          </div>
+          <div class="form-group">
+            <label for="accEmailInput">البريد الإلكتروني (Gmail):</label>
+            <input type="email" id="accEmailInput" placeholder="example@gmail.com">
+          </div>
+          <button id="saveGmailAccountBtn" class="main-btn">
+            <span>☁️ تسجيل الحساب والمزامنة مع Gmail</span>
+          </button>
+        </div>
+
+        <div id="loggedInActions" class="logged-in-box hidden">
+          <div class="cloud-stats">
+            <div>الكؤوس المحفوظة: <b id="cloudTrophies">0</b> 🏆</div>
+            <div>الألوان المملوكة: <b id="cloudColorsCount">0</b></div>
+            <div>أعلى مسافة: <b id="cloudMaxDistance">0</b> م</div>
+            <div>آخر مزامنة: <b id="cloudLastSync">-</b></div>
+          </div>
+
+          <div class="cloud-btns-row">
+            <button id="syncNowBtn" class="secondary-btn">☁️ مزامنة سحابية الآن</button>
+            <button id="restoreCloudBtn" class="secondary-btn">📥 استرجاع من السحابة</button>
+            <button id="logoutBtn" class="secondary-btn danger-btn">تسجيل الخروج</button>
+          </div>
+        </div>
+
+        <p id="accountNotice" class="account-notice"></p>
+
+        <div class="modal-footer">
+          <button id="closeAccountBtn" class="secondary-btn">↩️ رجوع للقائمة</button>
+        </div>
+      </div>
+    </section>
+
+    <!-- IN-GAME HUD -->
+    <section id="gameUI" class="hidden">
+      <div class="hud">
+        <div class="hud-box trophy-hud">🏆 <b id="score">0</b></div>
+        <div class="hud-box speed-hud">السرعة <b id="speed">0</b> <small>كم/س</small></div>
+        <div class="hud-box shield-hud">🛡️ <b id="shieldCount">0</b></div>
+        <div class="hud-box distance-hud">المسافة <b id="distanceHud">0</b> م</div>
+        <div class="hud-box difficulty-hud"><b id="difficultyHud">عادي</b></div>
+
+        <button id="hudLeaveServerBtn" class="hud-btn leave-server-btn hidden" title="الخروج من السيرفر والرجوع">
+          🚪 خروج
+        </button>
+
+        <button id="pauseBtn" class="hud-btn" title="إيقاف مؤقت">Ⅱ</button>
+      </div>
+
+      <div id="friendLocateContainer" class="friend-locate-container hidden">
+        <div class="friend-locate-header">
+          <span class="locate-icon">📡</span>
+          <span>رادار الأصدقاء (Friend Locate)</span>
+          <span id="friendLocateCount" class="badge">0</span>
+        </div>
+        <div id="friendLocateList" class="friend-locate-list"></div>
+      </div>
+
+      <div id="friendPointersLayer" class="friend-pointers-layer"></div>
+      <div id="eventText" class="event-text"></div>
+    </section>
+
+    <!-- PAUSE SCREEN -->
+    <section id="pauseScreen" class="screen hidden">
+      <div class="menu-card small">
+        <h1>إيقاف مؤقت</h1>
+        <button id="resumeBtn" class="main-btn">متابعة اللعب</button>
+        <button id="restartBtn" class="secondary-btn">إعادة المحاولة</button>
+        <button id="menuBtn" class="secondary-btn">↩️ القائمة الرئيسية (رجوع)</button>
+      </div>
+    </section>
+
+    <!-- GAME OVER SCREEN -->
+    <section id="gameOverScreen" class="screen hidden">
+      <div class="menu-card small">
+        <div class="game-over">انتهى السباق!</div>
+        <p>النقاط والكؤوس: <b id="finalScore">0</b> 🏆</p>
+        <p>المسافة المقطوعة: <b id="finalDistance">0</b> م</p>
+        <p id="multiplayerOverRank" class="mp-rank-text"></p>
+        <button id="retryBtn" class="main-btn">السباق مجدداً</button>
+        <button id="overLeaveBtn" class="secondary-btn danger-btn hidden">🚪 خروج ورجوع للقائمة</button>
+        <button id="overMenuBtn" class="secondary-btn">↩️ القائمة الرئيسية</button>
+      </div>
+    </section>
+
+    <!-- MOBILE CONTROLS -->
+    <div id="mobileControls" class="hidden">
+      <div class="controls-cluster steering-cluster">
+        <button id="leftBtn" class="ctrl-btn" aria-label="يسار">◀</button>
+        <button id="rightBtn" class="ctrl-btn" aria-label="يمين">▶</button>
+      </div>
+
+      <div class="controls-cluster pedal-cluster">
+        <button id="upBtn" class="ctrl-btn pedal-btn gas-btn" aria-label="تسريع للأمام">
+          <span>▲</span>
+          <small>تسريع</small>
+        </button>
+        <button id="downBtn" class="ctrl-btn pedal-btn brake-btn" aria-label="فرملة ورجوع">
+          <span>▼</span>
+          <small>فرملة</small>
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <script src="game.js"></script>
+</body>
+</html>

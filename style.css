@@ -1,0 +1,685 @@
+/* ==========================================
+   1. GLOBAL RESET & BASE VARIABLES
+   ========================================== */
+* {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+  user-select: none;
+  -webkit-user-select: none;
+  -webkit-touch-callout: none;
+}
+
+:root {
+  --primary-gold: #ffb300;
+  --primary-gold-hover: #ffc107;
+  --primary-gold-dark: #ff8f00;
+  --accent-cyan: #00e5ff;
+  --accent-cyan-dark: #00b0ff;
+  --bg-dark: #0d1117;
+  --card-bg: rgba(22, 28, 36, 0.96);
+  --card-border: rgba(255, 255, 255, 0.12);
+  --text-main: #ffffff;
+  --text-muted: #90a4ae;
+  --danger-red: #ff5252;
+  --success-green: #81c784;
+}
+
+::-webkit-scrollbar {
+  width: 6px;
+  height: 6px;
+}
+
+::-webkit-scrollbar-track {
+  background: rgba(14, 18, 24, 0.9);
+  border-radius: 10px;
+}
+
+::-webkit-scrollbar-thumb {
+  background: linear-gradient(180deg, var(--primary-gold), var(--primary-gold-dark));
+  border-radius: 10px;
+  border: 1px solid rgba(14, 18, 24, 0.9);
+}
+
+* {
+  scrollbar-width: thin;
+  scrollbar-color: var(--primary-gold) rgba(14, 18, 24, 0.9);
+}
+
+html, body {
+  width: 100%;
+  height: 100%;
+  height: 100dvh;
+  overflow: hidden;
+  background: var(--bg-dark);
+  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Cairo", "Almarai", Tahoma, sans-serif;
+  touch-action: none;
+  color: var(--text-main);
+  overscroll-behavior: none;
+}
+
+#app, #gameCanvas {
+  position: fixed;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  height: 100dvh;
+}
+
+#gameCanvas {
+  display: block;
+  z-index: 1;
+}
+
+.hidden {
+  display: none !important;
+}
+
+/* ==========================================
+   2. TOP BAR & USER PILL
+   ========================================== */
+.top-bar {
+  position: fixed;
+  top: max(10px, env(safe-area-inset-top));
+  left: max(12px, env(safe-area-inset-left));
+  right: max(12px, env(safe-area-inset-right));
+  z-index: 35;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  pointer-events: none;
+}
+
+.user-pill, .trophy-pill {
+  pointer-events: auto;
+  background: rgba(22, 27, 34, 0.92);
+  border: 1px solid rgba(255, 255, 255, 0.18);
+  backdrop-filter: blur(12px);
+  padding: 6px 12px;
+  border-radius: 30px;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: clamp(11px, 2.4vw, 13px);
+  box-shadow: 0 6px 20px rgba(0, 0, 0, 0.4);
+  cursor: pointer;
+  transition: transform 0.2s, background 0.2s;
+}
+
+.user-pill:hover, .trophy-pill:hover {
+  transform: translateY(-2px);
+  background: rgba(33, 40, 50, 0.98);
+}
+
+.user-avatar { font-size: 15px; }
+
+.cloud-badge {
+  background: rgba(76, 175, 80, 0.2);
+  color: var(--success-green);
+  font-size: 10px;
+  padding: 2px 6px;
+  border-radius: 10px;
+  border: 1px solid rgba(129, 199, 132, 0.3);
+}
+
+.cloud-badge.offline {
+  background: rgba(255, 152, 0, 0.2);
+  color: #ffb74d;
+  border-color: rgba(255, 183, 77, 0.3);
+}
+
+.trophy-pill { color: #ffd54f; }
+.trophy-pill b { color: #fff; font-weight: 800; }
+
+/* ==========================================
+   3. SCREEN OVERLAYS & MODALS
+   ========================================== */
+.screen {
+  position: fixed;
+  inset: 0;
+  display: grid;
+  place-items: center;
+  background: rgba(8, 12, 18, 0.78);
+  backdrop-filter: blur(12px);
+  z-index: 40;
+  padding: max(12px, env(safe-area-inset-top)) max(12px, env(safe-area-inset-right)) max(12px, env(safe-area-inset-bottom)) max(12px, env(safe-area-inset-left));
+  overflow-y: auto;
+}
+
+.menu-card {
+  width: min(500px, 92vw);
+  max-height: 88vh;
+  max-height: 88dvh;
+  overflow-y: auto;
+  padding: clamp(16px, 4vw, 24px);
+  border-radius: 24px;
+  background: linear-gradient(145deg, rgba(22, 28, 36, 0.96), rgba(14, 18, 24, 0.98));
+  border: 1px solid var(--card-border);
+  color: #fff;
+  text-align: center;
+  box-shadow: 0 25px 65px rgba(0, 0, 0, 0.7);
+}
+
+.menu-card.small { width: min(390px, 92vw); }
+.menu-card.large-modal { width: min(650px, 94vw); }
+
+.logo {
+  font-size: clamp(30px, 7vw, 40px);
+  font-weight: 900;
+  letter-spacing: 2px;
+  text-shadow: 0 0 20px rgba(255, 179, 0, 0.4);
+}
+.logo span { color: var(--primary-gold); }
+
+.subtitle {
+  color: var(--text-muted);
+  font-size: clamp(11px, 2.6vw, 13px);
+  margin-bottom: 12px;
+}
+
+h2 {
+  font-size: clamp(16px, 4vw, 20px);
+  font-weight: 800;
+  margin-bottom: 6px;
+}
+
+.modal-desc {
+  font-size: clamp(11px, 2.6vw, 13px);
+  color: var(--text-muted);
+  margin-bottom: 14px;
+  line-height: 1.5;
+}
+
+/* ==========================================
+   4. CAR PREVIEW BOX
+   ========================================== */
+.car-preview-wrap {
+  height: clamp(70px, 16vh, 95px);
+  display: grid;
+  place-items: center;
+  margin: 2px 0 10px;
+}
+
+.car-preview {
+  width: 50px;
+  height: 82px;
+  border-radius: 12px;
+  background: #e53935;
+  border: 3px solid #111;
+  box-shadow: 0 12px 25px rgba(0, 0, 0, 0.6);
+  position: relative;
+  transition: transform 0.25s, background 0.3s;
+}
+
+.car-preview:hover { transform: scale(1.06) translateY(-3px); }
+
+.car-window {
+  position: absolute;
+  left: 8px; right: 8px; top: 15px; height: 20px;
+  border-radius: 7px;
+  background: linear-gradient(180deg, #b3e5fc, #1d3548);
+}
+
+.car-stripes {
+  position: absolute;
+  top: 0; bottom: 0; left: 50%; width: 5px;
+  transform: translateX(-50%);
+  background: rgba(255, 255, 255, 0.2);
+}
+
+/* ==========================================
+   5. ACTION TILES & MODE TABS
+   ========================================== */
+.action-tiles {
+  display: grid;
+  gap: 8px;
+  margin-bottom: 12px;
+}
+
+.action-tiles.three-tiles {
+  grid-template-columns: repeat(auto-fit, minmax(110px, 1fr));
+}
+
+.tile-btn {
+  background: rgba(30, 38, 48, 0.85);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  border-radius: 12px;
+  padding: 9px 6px;
+  color: #fff;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 5px;
+  font-size: clamp(10px, 2.5vw, 12px);
+  font-weight: 600;
+  transition: all 0.2s;
+}
+
+.tile-btn:hover {
+  background: rgba(43, 54, 68, 0.95);
+  border-color: rgba(0, 229, 255, 0.4);
+}
+
+.tutorial-tile {
+  background: linear-gradient(135deg, rgba(0, 229, 255, 0.15), rgba(0, 180, 216, 0.25));
+  border-color: rgba(0, 229, 255, 0.35);
+  color: #e0f7fa;
+}
+
+.tile-icon { font-size: 15px; }
+
+.mode-tabs-container { margin-bottom: 12px; }
+
+.mode-tabs {
+  display: flex;
+  background: rgba(16, 21, 28, 0.9);
+  padding: 4px;
+  border-radius: 14px;
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  gap: 4px;
+}
+
+.mode-tab-btn {
+  flex: 1;
+  background: transparent;
+  border: 0;
+  color: var(--text-muted);
+  padding: 8px 5px;
+  border-radius: 10px;
+  cursor: pointer;
+  font-size: clamp(10px, 2.5vw, 12px);
+  font-weight: 700;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 5px;
+  transition: all 0.2s;
+}
+
+.mode-tab-btn.active {
+  background: linear-gradient(135deg, rgba(255, 179, 0, 0.9), rgba(255, 143, 0, 0.95));
+  color: #121212;
+  box-shadow: 0 4px 12px rgba(255, 179, 0, 0.3);
+}
+
+/* ==========================================
+   6. MULTIPLAYER CARDS & LOBBY
+   ========================================== */
+.multiplayer-actions {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  margin-bottom: 8px;
+}
+
+.mp-btn {
+  width: 100%;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 11px 12px;
+  border-radius: 14px;
+  border: 1px solid rgba(255, 255, 255, 0.15);
+  cursor: pointer;
+  text-align: right;
+  transition: all 0.2s;
+}
+
+.host-btn {
+  background: linear-gradient(135deg, rgba(255, 179, 0, 0.18), rgba(255, 143, 0, 0.25));
+  border-color: rgba(255, 179, 0, 0.5);
+  color: #fff;
+}
+
+.join-btn {
+  background: linear-gradient(135deg, rgba(33, 150, 243, 0.18), rgba(30, 136, 229, 0.28));
+  border-color: rgba(33, 150, 243, 0.5);
+  color: #fff;
+}
+
+.mp-icon { font-size: 22px; }
+.mp-text strong { display: block; font-size: clamp(12px, 3vw, 14px); }
+.mp-text small { display: block; font-size: 10px; color: #b0bec5; }
+
+.mp-features-hint {
+  font-size: 10px;
+  color: var(--accent-cyan);
+  background: rgba(0, 229, 255, 0.1);
+  padding: 5px 10px;
+  border-radius: 8px;
+  border: 1px dashed rgba(0, 229, 255, 0.3);
+}
+
+/* ==========================================
+   7. FORM INPUTS & BUTTONS
+   ========================================== */
+.settings-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 8px;
+  margin-bottom: 10px;
+  text-align: right;
+}
+
+.form-group.full-width { grid-column: span 2; }
+.form-group label {
+  display: block;
+  margin-bottom: 3px;
+  color: #cfd8dc;
+  font-size: 10px;
+  font-weight: 600;
+}
+
+select, input[type="text"], input[type="email"] {
+  width: 100%;
+  padding: 8px 10px;
+  border: 1px solid rgba(255, 255, 255, 0.15);
+  border-radius: 10px;
+  background: #212832;
+  color: #fff;
+  font-size: 12px;
+  outline: none;
+  text-align: right;
+  direction: rtl;
+}
+
+.main-btn, .secondary-btn {
+  width: 100%;
+  border: 0;
+  border-radius: 12px;
+  padding: 11px;
+  cursor: pointer;
+  font-size: clamp(12px, 3vw, 14px);
+  font-weight: 800;
+  transition: all 0.2s;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+}
+
+.main-btn {
+  background: linear-gradient(135deg, var(--primary-gold), var(--primary-gold-dark));
+  color: #121212;
+  box-shadow: 0 6px 18px rgba(255, 179, 0, 0.3);
+}
+
+.secondary-btn { background: #2b3642; color: #fff; margin-top: 6px; }
+.danger-btn { background: rgba(211, 47, 47, 0.2); border: 1px solid rgba(211, 47, 47, 0.4); color: var(--danger-red); }
+
+.help-box { margin-top: 10px; color: var(--text-muted); font-size: 10px; }
+.help-box span { color: var(--primary-gold); font-weight: bold; }
+
+/* ==========================================
+   8. LOBBY & CODE INPUT
+   ========================================== */
+.lobby-box {
+  background: rgba(18, 22, 28, 0.85);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  border-radius: 14px;
+  padding: 10px;
+  margin: 10px 0;
+  text-align: center;
+}
+
+.room-code {
+  font-family: monospace;
+  font-size: clamp(22px, 5vw, 28px);
+  font-weight: 900;
+  letter-spacing: 4px;
+  color: var(--accent-cyan);
+  background: rgba(0, 0, 0, 0.4);
+  padding: 4px 10px;
+  border-radius: 8px;
+  border: 1px dashed rgba(0, 229, 255, 0.4);
+}
+
+.copy-btn {
+  background: #2b3642; color: #fff;
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  padding: 6px 10px; border-radius: 8px;
+  cursor: pointer; font-size: 10px;
+}
+
+.code-input-container input {
+  font-family: monospace;
+  font-size: clamp(20px, 4.5vw, 26px);
+  font-weight: 900;
+  letter-spacing: 5px;
+  text-align: center;
+  direction: ltr;
+  color: var(--accent-cyan);
+}
+
+/* ==========================================
+   9. IN-GAME HUD (POSITIONED BELOW TOP BAR)
+   ========================================== */
+.hud {
+  position: fixed;
+  top: max(56px, calc(env(safe-area-inset-top) + 48px));
+  left: 50%;
+  transform: translateX(-50%);
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: clamp(4px, 1.2vw, 8px);
+  direction: ltr;
+  z-index: 20;
+  width: min(96vw, 820px);
+  pointer-events: none;
+}
+
+.hud-box, .hud-btn {
+  background: rgba(22, 28, 38, 0.92);
+  color: #fff;
+  border: 1px solid rgba(255, 255, 255, 0.18);
+  border-radius: 10px;
+  padding: 5px clamp(7px, 1.6vw, 12px);
+  backdrop-filter: blur(10px);
+  font-size: clamp(10px, 2.4vw, 12px);
+  box-shadow: 0 4px 15px rgba(0, 0, 0, 0.4);
+}
+
+.hud-btn {
+  cursor: pointer;
+  pointer-events: auto;
+  transition: transform 0.15s, background 0.15s;
+}
+
+.hud-btn:active { transform: scale(0.92); }
+
+.trophy-hud b { color: #ffd54f; }
+.speed-hud b { color: var(--accent-cyan); font-size: clamp(11px, 2.6vw, 14px); }
+.shield-hud b { color: #69f0ae; }
+
+.leave-server-btn {
+  background: rgba(211, 47, 47, 0.88);
+  border-color: var(--danger-red);
+  color: #fff;
+  font-weight: bold;
+}
+
+.event-text {
+  position: fixed;
+  top: clamp(100px, 16vh, 120px);
+  left: 50%;
+  transform: translateX(-50%);
+  color: #fff;
+  background: rgba(0, 0, 0, 0.9);
+  border: 1px solid rgba(255, 255, 255, 0.22);
+  padding: 6px 14px;
+  border-radius: 12px;
+  opacity: 0;
+  transition: opacity 0.2s, transform 0.2s;
+  pointer-events: none;
+  font-size: clamp(11px, 2.8vw, 13px);
+  font-weight: bold;
+  z-index: 22;
+  white-space: nowrap;
+}
+
+/* ==========================================
+   10. FRIEND LOCATE RADAR & POINTERS
+   ========================================== */
+.friend-locate-container {
+  position: fixed;
+  top: clamp(105px, 17vh, 125px);
+  right: max(10px, env(safe-area-inset-right));
+  z-index: 18;
+  background: rgba(18, 24, 34, 0.92);
+  border: 1px solid rgba(0, 229, 255, 0.35);
+  backdrop-filter: blur(10px);
+  border-radius: 14px;
+  padding: 6px 8px;
+  min-width: 140px;
+  box-shadow: 0 6px 25px rgba(0, 0, 0, 0.5);
+  direction: rtl;
+  text-align: right;
+  pointer-events: none;
+}
+
+.friend-locate-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 4px;
+  font-size: 9px;
+  font-weight: 800;
+  color: var(--accent-cyan);
+  border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+  padding-bottom: 3px;
+  margin-bottom: 3px;
+}
+
+.friend-locate-header .badge {
+  background: var(--accent-cyan);
+  color: #000;
+  padding: 1px 4px;
+  border-radius: 6px;
+  font-size: 8px;
+}
+
+.friend-locate-list { display: flex; flex-direction: column; gap: 3px; }
+
+.friend-locate-item {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 4px;
+  background: rgba(30, 38, 48, 0.6);
+  padding: 2px 5px;
+  border-radius: 6px;
+  font-size: 9px;
+}
+
+.friend-locate-name { display: flex; align-items: center; gap: 4px; font-weight: bold; }
+.friend-locate-dot { width: 6px; height: 6px; border-radius: 50%; }
+.friend-locate-dist { font-family: monospace; font-weight: bold; }
+.friend-locate-dist.ahead { color: #69f0ae; }
+.friend-locate-dist.behind { color: #ffab40; }
+.friend-locate-dist.same { color: var(--accent-cyan); }
+
+.friend-pointers-layer { position: fixed; inset: 0; pointer-events: none; z-index: 17; }
+
+.friend-pointer {
+  position: absolute;
+  padding: 2px 6px;
+  border-radius: 10px;
+  font-size: 9px;
+  font-weight: bold;
+  color: #fff;
+  background: rgba(18, 24, 34, 0.9);
+  border: 1px solid var(--accent-cyan);
+  transform: translate(-50%, -50%);
+}
+
+/* ==========================================
+   11. TOUCH CONTROLS (TOUCH & MOBILE)
+   ========================================== */
+#mobileControls {
+  position: fixed;
+  left: 0; right: 0;
+  bottom: max(10px, env(safe-area-inset-bottom));
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-end;
+  padding: 0 max(10px, env(safe-area-inset-left), env(safe-area-inset-right));
+  z-index: 30;
+  pointer-events: none;
+  direction: ltr;
+}
+
+.controls-cluster {
+  display: flex;
+  gap: clamp(6px, 1.8vw, 10px);
+  pointer-events: auto;
+}
+
+.ctrl-btn {
+  width: clamp(52px, 13.5vw, 74px);
+  height: clamp(52px, 13.5vw, 74px);
+  border-radius: 16px;
+  border: 1px solid rgba(255, 255, 255, 0.28);
+  background: rgba(22, 28, 38, 0.88);
+  color: #fff;
+  font-size: clamp(18px, 4.5vw, 24px);
+  backdrop-filter: blur(8px);
+  box-shadow: 0 6px 20px rgba(0, 0, 0, 0.5);
+  cursor: pointer;
+  touch-action: manipulation;
+  -webkit-tap-highlight-color: transparent;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  transition: transform 0.08s, background 0.08s;
+  pointer-events: auto;
+}
+
+.ctrl-btn:active, .ctrl-btn.active {
+  transform: scale(0.90);
+  background: rgba(45, 58, 78, 0.98);
+  border-color: var(--accent-cyan);
+}
+
+.pedal-btn { font-size: clamp(15px, 3.8vw, 19px); }
+.pedal-btn small { font-size: clamp(8px, 1.8vw, 9.5px); font-weight: 700; }
+
+.gas-btn {
+  border-color: rgba(76, 175, 80, 0.45);
+  background: linear-gradient(145deg, rgba(30, 48, 38, 0.88), rgba(20, 36, 28, 0.95));
+}
+.gas-btn:active, .gas-btn.active { border-color: #4caf50; box-shadow: 0 0 12px rgba(76, 175, 80, 0.6); }
+
+.brake-btn {
+  border-color: rgba(244, 67, 54, 0.45);
+  background: linear-gradient(145deg, rgba(48, 30, 32, 0.88), rgba(36, 20, 22, 0.95));
+}
+.brake-btn:active, .brake-btn.active { border-color: #f44336; box-shadow: 0 0 12px rgba(244, 67, 54, 0.6); }
+
+/* ==========================================
+   12. GAME OVER & PAUSE SCREEN
+   ========================================== */
+.game-over {
+  font-size: clamp(24px, 5.5vw, 32px);
+  font-weight: 900;
+  color: var(--danger-red);
+  margin-bottom: 8px;
+}
+
+@media (max-height: 520px) {
+  .menu-card { padding: 10px; border-radius: 14px; }
+  .car-preview-wrap { height: 55px; }
+  .car-preview { transform: scale(0.65); }
+  .logo { font-size: 24px; }
+  .hud { top: 44px; gap: 2px; }
+  .hud-box, .hud-btn { padding: 3px 6px; font-size: 9px; }
+  .friend-locate-container { top: auto; bottom: 75px; right: 6px; }
+}
+
+@media (max-width: 480px) {
+  .difficulty-hud { display: none; }
+  .action-tiles.three-tiles { grid-template-columns: 1fr; }
+}
